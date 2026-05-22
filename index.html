@@ -192,6 +192,14 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
 
 <div class="app-container">
 
+   <div id="authSection" class="card">
+  <h2>Login / Sign Up</h2>
+  <input type="email" id="userEmail" placeholder="Email" style="margin-bottom:10px;">
+  <input type="password" id="userPass" placeholder="Password" style="margin-bottom:10px;">
+  <button onclick="signIn()" class="btn-primary" style="margin-top:0;">Login</button>
+  <button onclick="signUp()" class="btn-outline" style="margin-top:10px;">Sign Up</button>
+   </div>
+
   <div class="header">
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('daily')">Daily Tracker</button>
@@ -366,9 +374,55 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
 /* =========================================
    SUPABASE INTEGRATION
    ========================================= */
+/* =========================================
+   SUPABASE INTEGRATION (Updated)
+   ========================================= */
 const SUPABASE_URL = 'https://kqwllidmkcbcrwvktctv.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxd2xsaWRta2NiY3J3dmt0Y3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NDAzODksImV4cCI6MjA5NTAxNjM4OX0.7dwEkVYRGwfGd6twzaFqPiVJNY8FCn9uiX-HueYfiqs';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Detect login state
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    document.getElementById('authSection').classList.add('hidden');
+    loadFromCloud();
+  } else {
+    document.getElementById('authSection').classList.remove('hidden');
+  }
+});
+
+async function signIn() {
+  const email = document.getElementById('userEmail').value;
+  const pass = document.getElementById('userPass').value;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+  if (error) alert(error.message);
+}
+
+async function signUp() {
+  const email = document.getElementById('userEmail').value;
+  const pass = document.getElementById('userPass').value;
+  const { error } = await supabaseClient.auth.signUp({ email, password: pass });
+  if (error) alert(error.message);
+  else alert("Check your email to confirm your account!");
+}
+
+async function loadFromCloud() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return;
+  const { data } = await supabaseClient.from('user_data').select('content').eq('id', user.id).single();
+  if (data?.content) {
+    dailyData = data.content.dailyData || [];
+    mockData = data.content.mockData || [];
+    goalData = data.content.goalData || null;
+    refreshUI();
+  }
+}
+
+async function saveDataToCloud() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return;
+  await supabaseClient.from('user_data').upsert({ id: user.id, content: { dailyData, mockData, goalData } });
+}
 
 /* =========================================
    CORE STATE & INITIALIZATION
