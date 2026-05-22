@@ -188,6 +188,8 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
 </head>
 <body>
 
+<div id="toast">Saved Successfully!</div>
+
 <div class="app-container">
 
   <div id="authSection" class="card">
@@ -210,10 +212,12 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
         <button class="btn-outline" onclick="exportData()">Export Data</button>
         <button class="btn-outline" onclick="document.getElementById('importFile').click()">Import</button>
         <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+        <button class="btn-outline" onclick="logOut()" style="color:var(--red); border-color:var(--red);">Log Out</button>
       </div>
     </div>
 
     <div id="dailySection">
+      
       <div class="card">
         <h2 class="section-title">Weekly Target Lock-In</h2>
         <div id="goalSetupDiv" class="goal-setup">
@@ -255,11 +259,13 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
           <div class="input-group"><label>Sleep Time</label><input type="time" id="dSleep"></div>
           <div class="input-group"><label style="color:var(--accent-blue)">Rate Day (1-5)</label><input type="number" id="dRate" min="1" max="5" placeholder="1 = Burnout, 5 = Flow"></div>
         </div>
+        
         <div class="input-grid">
           <div class="input-group"><label style="color:var(--phy-color)">Physics (Qs / Hrs)</label><div class="input-row"><input type="number" id="pQ" placeholder="Qs"><input type="number" id="pH" placeholder="Hrs"></div></div>
           <div class="input-group"><label style="color:var(--chem-color)">Chemistry (Qs / Hrs)</label><div class="input-row"><input type="number" id="cQ" placeholder="Qs"><input type="number" id="cH" placeholder="Hrs"></div></div>
           <div class="input-group"><label style="color:var(--math-color)">Math (Qs / Hrs)</label><div class="input-row"><input type="number" id="mQ" placeholder="Qs"><input type="number" id="mH" placeholder="Hrs"></div></div>
         </div>
+
         <div id="lostTimeAudit" class="lost-time-display hidden"><div class="lost-time-val" id="lostTimeText">0 HOURS LOST</div></div>
         <button class="btn-primary" onclick="saveDaily()">Save Daily Entry</button>
       </div>
@@ -269,6 +275,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
           <h2 class="section-title" style="margin:0;">Consistency Grid</h2>
           <div style="display:flex; gap:8px;"><button class="btn-outline" onclick="changeMonth(-1)">&#8592;</button><span id="calMonthDisplay" style="font-weight:600; width:90px; text-align:center; font-size:14px; line-height: 32px;">Month</span><button class="btn-outline" onclick="changeMonth(1)">&#8594;</button></div>
         </div>
+        
         <div class="cal-wrapper">
           <div><div class="calendar-grid"><div class="day-name">Sun</div><div class="day-name">Mon</div><div class="day-name">Tue</div><div class="day-name">Wed</div><div class="day-name">Thu</div><div class="day-name">Fri</div><div class="day-name">Sat</div></div><div class="calendar-grid" id="calendarGrid"></div></div>
           <div id="dayDetailsPanel" class="day-details-panel"><div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;"><b id="ddDate" style="color:var(--accent-blue); font-size: 16px;">Select a day</b></div><div class="details-grid"><div class="details-box"><div style="color:var(--phy-color); font-size:12px; font-weight:700;">PHY</div><div style="margin-top:4px;" id="ddPhy">-</div></div><div class="details-box"><div style="color:var(--chem-color); font-size:12px; font-weight:700;">CHEM</div><div style="margin-top:4px;" id="ddChem">-</div></div><div class="details-box"><div style="color:var(--math-color); font-size:12px; font-weight:700;">MATH</div><div style="margin-top:4px;" id="ddMath">-</div></div></div></div>
@@ -278,39 +285,77 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
 
     <div id="mockSection" class="hidden">
       <div class="toggle-group"><button class="tab-btn active" id="btnMains" onclick="switchMockType('mains')">JEE Mains</button><button class="tab-btn" id="btnAdv" onclick="switchMockType('advanced')">JEE Advanced</button></div>
+      
       <div class="card">
         <h2 class="section-title" id="mockFormTitle">Add JEE Mains Mock</h2>
         <div class="input-grid"><div class="input-group"><label>Test Date</label><input type="date" id="mDate"></div><div class="input-group"><label>Test Name</label><input type="text" id="mName" placeholder="e.g. AITS 1"></div><div class="input-group full-width"><label>Syllabus Detail</label><textarea id="mSyllabus" placeholder="e.g. Full Syllabus..."></textarea></div></div>
-        <div id="mainsInputs" style="margin-top:20px;"><div class="input-grid"><div class="input-group"><label style="color:var(--phy-color)">Physics</label><div class="input-row"><input type="number" id="mpC" placeholder="Correct"><input type="number" id="mpW" placeholder="Wrong"></div></div><div class="input-group"><label style="color:var(--chem-color)">Chemistry</label><div class="input-row"><input type="number" id="mcC" placeholder="Correct"><input type="number" id="mcW" placeholder="Wrong"></div></div><div class="input-group"><label style="color:var(--math-color)">Math</label><div class="input-row"><input type="number" id="mmC" placeholder="Correct"><input type="number" id="mmW" placeholder="Wrong"></div></div></div></div>
-        <div id="advInputs" class="hidden" style="margin-top:20px;"></div>
+        
+        <div id="mainsInputs" style="margin-top:20px;">
+          <div class="input-grid"><div class="input-group"><label style="color:var(--phy-color)">Physics</label><div class="input-row"><input type="number" id="mpC" placeholder="Correct"><input type="number" id="mpW" placeholder="Wrong"></div></div><div class="input-group"><label style="color:var(--chem-color)">Chemistry</label><div class="input-row"><input type="number" id="mcC" placeholder="Correct"><input type="number" id="mcW" placeholder="Wrong"></div></div><div class="input-group"><label style="color:var(--math-color)">Math</label><div class="input-row"><input type="number" id="mmC" placeholder="Correct"><input type="number" id="mmW" placeholder="Wrong"></div></div></div>
+        </div>
+        
+        <div id="advInputs" class="hidden" style="margin-top:20px;">
+          <h4 style="margin-bottom:12px; font-size:14px; color:white; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">Paper 1</h4>
+          <div class="input-grid" style="margin-bottom:20px;">
+            <div class="input-group"><label style="color:var(--phy-color)">Phy (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a1pA" placeholder="Att"><input type="number" class="input-mini" id="a1pM" placeholder="Mark"><input type="number" class="input-mini" id="a1pW" placeholder="Wrng"></div></div>
+            <div class="input-group"><label style="color:var(--chem-color)">Chem (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a1cA" placeholder="Att"><input type="number" class="input-mini" id="a1cM" placeholder="Mark"><input type="number" class="input-mini" id="a1cW" placeholder="Wrng"></div></div>
+            <div class="input-group"><label style="color:var(--math-color)">Math (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a1mA" placeholder="Att"><input type="number" class="input-mini" id="a1mM" placeholder="Mark"><input type="number" class="input-mini" id="a1mW" placeholder="Wrng"></div></div>
+          </div>
+          <h4 style="margin-bottom:12px; font-size:14px; color:white; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">Paper 2</h4>
+          <div class="input-grid">
+            <div class="input-group"><label style="color:var(--phy-color)">Phy (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a2pA" placeholder="Att"><input type="number" class="input-mini" id="a2pM" placeholder="Mark"><input type="number" class="input-mini" id="a2pW" placeholder="Wrng"></div></div>
+            <div class="input-group"><label style="color:var(--chem-color)">Chem (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a2cA" placeholder="Att"><input type="number" class="input-mini" id="a2cM" placeholder="Mark"><input type="number" class="input-mini" id="a2cW" placeholder="Wrng"></div></div>
+            <div class="input-group"><label style="color:var(--math-color)">Math (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a2mA" placeholder="Att"><input type="number" class="input-mini" id="a2mM" placeholder="Mark"><input type="number" class="input-mini" id="a2mW" placeholder="Wrng"></div></div>
+          </div>
+        </div>
+
         <button class="btn-primary" onclick="saveMock()">Save Mock Test</button>
       </div>
+      
       <div class="mock-grid" id="mockGrid"></div>
     </div>
 
-  </div> </div>
+  </div> </div> 
 <script>
 /* =========================================
-   SUPABASE INTEGRATION (Final Secure Version)
+   1. SECURE CONFIGURATION & STATE
    ========================================= */
 const SUPABASE_URL = 'https://kqwllidmkcbcrwvktctv.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxd2xsaWRta2NiY3J3dmt0Y3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NDAzODksImV4cCI6MjA5NTAxNjM4OX0.7dwEkVYRGwfGd6twzaFqPiVJNY8FCn9uiX-HueYfiqs';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Handle Login/Logout UI State
+// Start empty! No data loads until login is verified.
+let dailyData = [];
+let mockData = [];
+let goalData = null;
+let currentMockType = 'mains';
+let calDate = new Date();
+
+// Set today's date in inputs automatically
+document.addEventListener("DOMContentLoaded", () => {
+  const dDate = document.getElementById('dDate');
+  const mDate = document.getElementById('mDate');
+  if (dDate) dDate.value = new Date().toISOString().split('T')[0];
+  if (mDate) mDate.value = new Date().toISOString().split('T')[0];
+});
+
+/* =========================================
+   2. AUTHENTICATION & SECURITY
+   ========================================= */
 supabaseClient.auth.onAuthStateChange((event, session) => {
   const authSection = document.getElementById('authSection');
   const mainApp = document.getElementById('mainAppContent');
   
   if (session) {
-    // Logged in: Hide login box, show app
+    // Logged in: Hide login box, show app, load cloud data
     if (authSection) authSection.classList.add('hidden');
     if (mainApp) mainApp.classList.remove('hidden');
     loadFromCloud();
   } else {
-    // Logged out: Show login box, hide app
+    // Logged out: Show login box, hide app, wipe screen
     if (authSection) authSection.classList.remove('hidden');
     if (mainApp) mainApp.classList.add('hidden');
+    clearData();
   }
 });
 
@@ -329,101 +374,56 @@ async function signUp() {
   else alert("Check your email to confirm your account!");
 }
 
+async function logOut() {
+  await supabaseClient.auth.signOut();
+  location.reload(); // Force refresh to guarantee security
+}
+
+function clearData() {
+  dailyData = [];
+  mockData = [];
+  goalData = null;
+  if (typeof refreshUI === 'function') refreshUI();
+}
+
+/* =========================================
+   3. CLOUD DATA SYNC
+   ========================================= */
 async function loadFromCloud() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
   
-  const { data } = await supabaseClient.from('user_data').select('content').eq('id', user.id).single();
-  if (data?.content) {
+  const { data, error } = await supabaseClient.from('user_data').select('content').eq('id', user.id).single();
+  
+  if (data && data.content) {
     dailyData = data.content.dailyData || [];
     mockData = data.content.mockData || [];
     goalData = data.content.goalData || null;
-    refreshUI();
   }
+  if (typeof refreshUI === 'function') refreshUI();
 }
 
 async function saveDataToCloud() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
-  // This uses your RLS policy to ensure users only save to their own ID
   await supabaseClient.from('user_data').upsert({ id: user.id, content: { dailyData, mockData, goalData } });
 }
-/* =========================================
-   CORE STATE & INITIALIZATION
-   ========================================= */
-const DB_DAILY = 'pcm_daily_v7', DB_MOCK = 'pcm_mock_v7', DB_GOAL = 'pcm_goal_v7';
 
-// Load locally first to ensure instant visual boot
-let dailyData = JSON.parse(localStorage.getItem(DB_DAILY)) || [];
-let mockData = JSON.parse(localStorage.getItem(DB_MOCK)) || [];
-let goalData = JSON.parse(localStorage.getItem(DB_GOAL)) || null;
-
-let currentMockType = 'mains', calDate = new Date();
-
-document.getElementById('dDate').value = new Date().toISOString().split('T')[0];
-document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
-
-/* =========================================
-   CLOUD SYNC LOGIC
-   ========================================= */
-async function loadFromCloud() {
-  try {
-    // 1. "Login" the exact same user on every device
-    const { data: { user }, error: authError } = await supabaseClient.auth.signInWithPassword({
-      email: 'gauravjee2026@gmail.com', // Use the email you just created
-      password: 'Gaurav@722#10' // Use the password you just created
-    });
-    
-    if (authError) throw authError;
-
-    // 2. Fetch the data from Supabase using that specific user's ID
-    const { data, error } = await supabaseClient.from('user_data').select('content').eq('id', user.id).single();
-    
-    if (data && data.content) {
-      dailyData = data.content.dailyData || [];
-      mockData = data.content.mockData || [];
-      goalData = data.content.goalData || null;
-      
-      // Update local storage to mirror the cloud
-      localStorage.setItem(DB_DAILY, JSON.stringify(dailyData));
-      localStorage.setItem(DB_MOCK, JSON.stringify(mockData));
-      localStorage.setItem(DB_GOAL, JSON.stringify(goalData));
-    }
-  } catch (err) {
-    console.error("Cloud sync error. Using local data.", err);
-  } finally {
-    // Refresh the UI with whatever data we ended up with
-    refreshUI();
-  }
-}
-
-async function saveDataToCloud() {
-  try {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
-
-    await supabaseClient.from('user_data').upsert({
-      id: user.id,
-      content: { dailyData, mockData, goalData }
-    });
-  } catch (err) {
-    console.error("Failed to push to cloud:", err);
-  }
-}
-
+// Master save function connected to your buttons
 async function saveData() {
-  // Update local storage instantly for snappy UX
-  localStorage.setItem(DB_DAILY, JSON.stringify(dailyData));
-  localStorage.setItem(DB_MOCK, JSON.stringify(mockData));
-  localStorage.setItem(DB_GOAL, JSON.stringify(goalData));
-  
-  // Push to cloud in the background
   await saveDataToCloud();
+  showToast("Saved Successfully!");
+  if (typeof refreshUI === 'function') refreshUI();
 }
 
+/* =========================================
+   4. UI UTILITIES
+   ========================================= */
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.innerText = msg; t.classList.add('show');
+  if (!t) return;
+  t.innerText = msg; 
+  t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
@@ -439,10 +439,10 @@ function switchMockType(type) {
   document.getElementById('advInputs').classList.toggle('hidden', type !== 'advanced');
   document.getElementById('btnMains').classList.toggle('active', type === 'mains');
   document.getElementById('btnAdv').classList.toggle('active', type === 'advanced');
-  document.getElementById('mockFormTitle').innerText = type === 'mains' ? "Add JEE Mains Mock" : "Add JEE Advanced Mock";
-  renderMocks(); 
+  const title = document.getElementById('mockFormTitle');
+  if (title) title.innerText = type === 'mains' ? "Add JEE Mains Mock" : "Add JEE Advanced Mock";
+  if (typeof renderMocks === 'function') renderMocks(); 
 }
-
 /* =========================================
    WEEKLY GOAL LOGIC
    ========================================= */
