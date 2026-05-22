@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>PCM Mastery Pro</title>
+<meta name="theme-color" content="#000000">
+<style>
+/* =========================================
+   PERFORMANCE-FIRST OLED UI
+   ========================================= */
+:root {
+  --bg-base: #000000;
+  --card-bg: #0a0a0c;
+  --border-color: #1f1f23;
+  
+  --text-main: #f3f4f6;
+  --text-muted: #8b8d98;
+  
+  --accent-blue: #3b82f6;
+  --accent-hover: #2563eb;
+  
+  --phy-color: #a855f7;
+  --chem-color: #10b981;
+  --math-color: #f59e0b;
+  
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+}
+
+* { 
+  margin: 0; padding: 0; box-sizing: border-box; 
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent; 
+}
+
+html { scroll-behavior: smooth; background: var(--bg-base); }
+body { 
+  color: var(--text-main); min-height: 100vh; padding-bottom: 80px; overflow-x: hidden; 
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+
+button { border: none; outline: none; background: transparent; color: white; cursor: pointer; touch-action: manipulation; }
+.app-container { max-width: 1000px; margin: 0 auto; padding: 16px; }
+.hidden { display: none !important; }
+
+/* TOAST NOTIFICATION */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: var(--green); color: #000; 
+  padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; 
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9999;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* HEADER */
+.header {
+  background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+}
+.tabs { display: flex; gap: 8px; background: #000; padding: 4px; border-radius: 12px; border: 1px solid var(--border-color); }
+.tab-btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--text-muted); transition: all 0.2s; }
+.tab-btn.active { background: #1f1f23; color: white; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.streak-badge { background: #1a1a1a; color: #f59e0b; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; border: 1px solid #332200; }
+.btn-outline { background: transparent; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; border: 1px solid var(--border-color); transition: background 0.2s; }
+.btn-outline:hover { background: #1a1a1a; }
+
+/* CARDS (Flat, No Shadows) */
+.card { background: var(--card-bg); border-radius: 16px; padding: 24px; border: 1px solid var(--border-color); margin-bottom: 24px; }
+.section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: white; }
+
+/* WEEKLY GOAL */
+.goal-setup, .goal-progress-view { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.progress-bar-bg { width: 100%; height: 10px; background: #1f1f23; border-radius: 8px; margin-top: 12px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--accent-blue); width: 0%; transition: width 0.4s ease; }
+
+/* 7-DAY ANALYSIS GRID */
+.analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.analysis-box { background: #000; padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
+.a-val { font-size: 20px; font-weight: 800; color: white; margin-top: 8px; }
+.a-hrs { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
+
+/* ZERO-OVERLAP ROBUST INPUTS */
+.input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; width: 100%; }
+.input-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.input-group label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.full-width { grid-column: 1 / -1; }
+
+input, textarea {
+  width: 100%; box-sizing: border-box; appearance: none; -webkit-appearance: none;
+  border: 1px solid var(--border-color); outline: none; background: #000; color: white;
+  padding: 14px; border-radius: 10px; font-size: 15px; transition: border-color 0.2s; 
+}
+textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+input:focus, textarea:focus { border-color: var(--accent-blue); }
+input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+/* Grid Layouts for numbers */
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.input-mini { padding: 12px 6px; font-size: 13px; text-align: center; }
+
+/* LOST TIME AUDIT */
+.lost-time-display { text-align: center; padding: 20px; background: rgba(239, 68, 68, 0.08); border: 1px dashed var(--red); border-radius: 12px; margin-top: 24px; }
+.lost-time-val { font-size: 28px; font-weight: 900; color: var(--red); letter-spacing: -1px; }
+
+/* CALENDAR (Grid + Tooltip) */
+.cal-wrapper { display: flex; flex-direction: column; gap: 16px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day-name { text-align: center; font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; padding-bottom: 8px; }
+
+.cal-day { 
+  aspect-ratio: 1; background: #000; border-radius: 8px; padding: 6px; 
+  border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+  cursor: pointer; transition: border-color 0.2s; position: relative;
+}
+.cal-day.empty { background: transparent; border: none; pointer-events: none; }
+.cal-day.active-sel { border-color: white; background: #1a1a1a; }
+
+.rate-1 { border-color: var(--red); color: var(--red); }
+.rate-2 { border-color: #f97316; color: #f97316; }
+.rate-3 { border-color: #eab308; color: #eab308; }
+.rate-4 { border-color: var(--green); color: var(--green); }
+.rate-5 { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+
+/* Tooltip Card (Hover only) */
+.cal-day .tooltip {
+  position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%) translateY(5px);
+  background: #111; border: 1px solid var(--border-color); color: white;
+  padding: 12px 16px; border-radius: 10px; width: max-content;
+  font-size: 13px; font-weight: 500; opacity: 0; visibility: hidden; pointer-events: none;
+  transition: all 0.2s ease-out; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  text-align: left; line-height: 1.6;
+}
+.cal-day .tooltip::after {
+  content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px;
+  border-width: 6px; border-style: solid; border-color: #111 transparent transparent transparent;
+}
+.cal-day:hover .tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+/* Day Details Panel (Mobile Fallback) */
+.day-details-panel { background: #000; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-top: 8px; font-size: 14px; display: none; }
+.day-details-panel.show { display: block; }
+.details-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 12px; text-align: center; }
+.details-box { background: var(--card-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+
+/* MOCK CARDS */
+.toggle-group { display: flex; gap: 8px; margin-bottom: 24px; background: #000; padding: 4px; border-radius: 12px; width: max-content; border: 1px solid var(--border-color); }
+.mock-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.subject-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); font-size: 14px; font-weight: 500; align-items: center; }
+.total-row { padding-top: 16px; font-size: 18px; font-weight: 800; display: flex; justify-content: space-between; align-items: center;}
+
+/* Adv Table Layout */
+.adv-table { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; font-size: 13px; align-items: center; margin-bottom: 6px; }
+.adv-table span { text-align: center; }
+.adv-table span:first-child { text-align: left; font-weight: 600; }
+
+/* What If Toggle */
+.what-if-btn { 
+  background: rgba(59, 130, 246, 0.1); color: #60a5fa; padding: 12px; border-radius: 8px; 
+  font-size: 13px; font-weight: 700; margin-top: 16px; text-align: center; transition: all 0.2s;
+  cursor: pointer; width: 100%; border: 1px solid rgba(59, 130, 246, 0.2);
+}
+.what-if-btn.active { background: #60a5fa; color: #000; }
+
+/* Primary Button */
+.btn-primary { 
+  background: var(--accent-blue); padding: 16px; border-radius: 12px; 
+  font-weight: 700; font-size: 15px; width: 100%; margin-top: 24px;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+@media (max-width: 768px) {
+  .header { flex-direction: column; align-items: stretch; }
+  .tabs, .toggle-group { width: 100%; justify-content: space-between; } 
+  .tab-btn { flex: 1; text-align: center; }
+  .header-actions { justify-content: space-between; }
+  .input-grid { grid-template-columns: 1fr; } 
+  .cal-day span:first-child { font-size: 13px; }
+  .cal-day span:last-child { font-size: 10px; }
+  .cal-day .tooltip { display: none !important; } /* Hide hover tooltip on mobile to avoid tap conflict */
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div id="toast">Saved Successfully!</div>
+
+<div class="app-container">
+
+  <div class="header">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('daily')">Daily Tracker</button>
+      <button class="tab-btn" onclick="switchTab('mocks')">Mock Tests</button>
+    </div>
+    <div class="header-actions">
+      <div class="streak-badge" id="streakBadge">🔥 0 Days</div>
+      <button class="btn-outline" onclick="exportData()">Export Data</button>
+      <button class="btn-outline" onclick="document.getElementById('importFile').click()">Import</button>
+      <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+    </div>
+  </div>
+
+  <div id="dailySection">
+    
+    <div class="card">
+      <h2 class="section-title">Weekly Target Lock-In</h2>
+      <div id="goalSetupDiv" class="goal-setup">
+        <input type="text" id="goalName" placeholder="Goal (e.g. Electrodynamics)" style="flex:2; min-width:140px;">
+        <input type="number" id="goalTarget" placeholder="Target No." style="flex:1; min-width:100px;">
+        <button class="btn-primary" onclick="setGoal()" style="margin-top:0; padding:14px; flex:1; min-width:100px;">Lock Target</button>
+      </div>
+      <div id="goalProgressDiv" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <h3 id="displayGoalName" style="font-size:16px; color:white;"></h3>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="goalAddVal" placeholder="+ Add" style="width:80px; padding:10px;">
+            <button class="btn-outline" onclick="updateGoal()">Add</button>
+            <button class="btn-outline" onclick="clearGoal()" style="color:var(--red); border-color:var(--red);">Reset</button>
+          </div>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="goalFill"></div></div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-muted); margin-top:8px; font-weight:600;">
+          <span id="goalTextCurrent">0 done</span><span id="goalTextTarget">Target: 0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Past 7 Days Output</h2>
+      <div class="analysis-grid">
+        <div class="analysis-box">
+          <div style="color:var(--phy-color); font-size:12px; font-weight:700;">PHYSICS</div>
+          <div class="a-val" id="aPhyQ">0 Qs</div>
+          <div class="a-hrs" id="aPhyH">0 hrs</div>
+        </div>
+        <div class="analysis-box">
+          <div style="color:var(--chem-color); font-size:12px; font-weight:700;">CHEMISTRY</div>
+          <div class="a-val" id="aChemQ">0 Qs</div>
+          <div class="a-hrs" id="aChemH">0 hrs</div>
+        </div>
+        <div class="analysis-box">
+          <div style="color:var(--math-color); font-size:12px; font-weight:700;">MATH</div>
+          <div class="a-val" id="aMathQ">0 Qs</div>
+          <div class="a-hrs" id="aMathH">0 hrs</div>
+        </div>
+        <div class="analysis-box" style="border-color:var(--accent-blue);">
+          <div style="color:var(--accent-blue); font-size:12px; font-weight:700;">TOTAL DEEP WORK</div>
+          <div class="a-val" id="aTotQ">0 Qs</div>
+          <div class="a-hrs" id="aTotH">0 hrs</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Log Today's Work</h2>
+      <div class="input-grid" style="margin-bottom:20px;">
+        <div class="input-group"><label>Date</label><input type="date" id="dDate"></div>
+        <div class="input-group"><label>Wake Up</label><input type="time" id="dWake"></div>
+        <div class="input-group"><label>Sleep Time</label><input type="time" id="dSleep"></div>
+        <div class="input-group"><label style="color:var(--accent-blue)">Rate Day (1-5)</label><input type="number" id="dRate" min="1" max="5" placeholder="1 = Burnout, 5 = Flow"></div>
+      </div>
+      
+      <div class="input-grid">
+        <div class="input-group"><label style="color:var(--phy-color)">Physics (Qs / Hrs)</label><div class="input-row"><input type="number" id="pQ" placeholder="Qs"><input type="number" id="pH" placeholder="Hrs"></div></div>
+        <div class="input-group"><label style="color:var(--chem-color)">Chemistry (Qs / Hrs)</label><div class="input-row"><input type="number" id="cQ" placeholder="Qs"><input type="number" id="cH" placeholder="Hrs"></div></div>
+        <div class="input-group"><label style="color:var(--math-color)">Math (Qs / Hrs)</label><div class="input-row"><input type="number" id="mQ" placeholder="Qs"><input type="number" id="mH" placeholder="Hrs"></div></div>
+      </div>
+
+      <div id="lostTimeAudit" class="lost-time-display hidden">
+        <div class="lost-time-val" id="lostTimeText">0 HOURS LOST</div>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:6px; font-weight:500;">Unaccounted awake time vs logged study</div>
+      </div>
+
+      <button class="btn-primary" onclick="saveDaily()">Save Daily Entry</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 class="section-title" style="margin:0;">Consistency Grid</h2>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-outline" onclick="changeMonth(-1)">&#8592;</button>
+          <span id="calMonthDisplay" style="font-weight:600; width:90px; text-align:center; font-size:14px; line-height: 32px;">Month</span>
+          <button class="btn-outline" onclick="changeMonth(1)">&#8594;</button>
+        </div>
+      </div>
+      
+      <div class="cal-wrapper">
+        <div>
+          <div class="calendar-grid"><div class="day-name">Sun</div><div class="day-name">Mon</div><div class="day-name">Tue</div><div class="day-name">Wed</div><div class="day-name">Thu</div><div class="day-name">Fri</div><div class="day-name">Sat</div></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+        
+        <div id="dayDetailsPanel" class="day-details-panel">
+          <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+            <b id="ddDate" style="color:var(--accent-blue); font-size: 16px;">Select a day</b>
+          </div>
+          <div class="details-grid">
+            <div class="details-box">
+              <div style="color:var(--phy-color); font-size:12px; font-weight:700;">PHY</div>
+              <div style="margin-top:4px;" id="ddPhy">-</div>
+            </div>
+            <div class="details-box">
+              <div style="color:var(--chem-color); font-size:12px; font-weight:700;">CHEM</div>
+              <div style="margin-top:4px;" id="ddChem">-</div>
+            </div>
+            <div class="details-box">
+              <div style="color:var(--math-color); font-size:12px; font-weight:700;">MATH</div>
+              <div style="margin-top:4px;" id="ddMath">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mockSection" class="hidden">
+    <div class="toggle-group">
+      <button class="tab-btn active" id="btnMains" onclick="switchMockType('mains')">JEE Mains</button>
+      <button class="tab-btn" id="btnAdv" onclick="switchMockType('advanced')">JEE Advanced</button>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title" id="mockFormTitle">Add JEE Mains Mock</h2>
+      <div class="input-grid">
+        <div class="input-group"><label>Test Date</label><input type="date" id="mDate"></div>
+        <div class="input-group"><label>Test Name</label><input type="text" id="mName" placeholder="e.g. AITS 1"></div>
+        <div class="input-group full-width"><label>Syllabus Detail</label><textarea id="mSyllabus" placeholder="e.g. Full Syllabus or Specific Chapters..."></textarea></div>
+      </div>
+
+      <div id="mainsInputs" style="margin-top:20px;">
+        <div class="input-grid">
+          <div class="input-group"><label style="color:var(--phy-color)">Physics (Correct / Wrong)</label><div class="input-row"><input type="number" id="mpC" placeholder="Correct"><input type="number" id="mpW" placeholder="Wrong"></div></div>
+          <div class="input-group"><label style="color:var(--chem-color)">Chemistry (Correct / Wrong)</label><div class="input-row"><input type="number" id="mcC" placeholder="Correct"><input type="number" id="mcW" placeholder="Wrong"></div></div>
+          <div class="input-group"><label style="color:var(--math-color)">Math (Correct / Wrong)</label><div class="input-row"><input type="number" id="mmC" placeholder="Correct"><input type="number" id="mmW" placeholder="Wrong"></div></div>
+        </div>
+      </div>
+
+      <div id="advInputs" class="hidden" style="margin-top:20px;">
+        <h4 style="margin-bottom:12px; font-size:14px; color:white; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">Paper 1</h4>
+        <div class="input-grid" style="margin-bottom:20px;">
+          <div class="input-group"><label style="color:var(--phy-color)">Phy (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a1pA" placeholder="Att"><input type="number" class="input-mini" id="a1pM" placeholder="Mark"><input type="number" class="input-mini" id="a1pW" placeholder="Wrng"></div></div>
+          <div class="input-group"><label style="color:var(--chem-color)">Chem (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a1cA" placeholder="Att"><input type="number" class="input-mini" id="a1cM" placeholder="Mark"><input type="number" class="input-mini" id="a1cW" placeholder="Wrng"></div></div>
+          <div class="input-group"><label style="color:var(--math-color)">Math (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a1mA" placeholder="Att"><input type="number" class="input-mini" id="a1mM" placeholder="Mark"><input type="number" class="input-mini" id="a1mW" placeholder="Wrng"></div></div>
+        </div>
+        <h4 style="margin-bottom:12px; font-size:14px; color:white; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">Paper 2</h4>
+        <div class="input-grid">
+          <div class="input-group"><label style="color:var(--phy-color)">Phy (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a2pA" placeholder="Att"><input type="number" class="input-mini" id="a2pM" placeholder="Mark"><input type="number" class="input-mini" id="a2pW" placeholder="Wrng"></div></div>
+          <div class="input-group"><label style="color:var(--chem-color)">Chem (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a2cA" placeholder="Att"><input type="number" class="input-mini" id="a2cM" placeholder="Mark"><input type="number" class="input-mini" id="a2cW" placeholder="Wrng"></div></div>
+          <div class="input-group"><label style="color:var(--math-color)">Math (Att / Mark / Wrng)</label><div class="input-row-3"><input type="number" class="input-mini" id="a2mA" placeholder="Att"><input type="number" class="input-mini" id="a2mM" placeholder="Mark"><input type="number" class="input-mini" id="a2mW" placeholder="Wrng"></div></div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="saveMock()">Save Mock Test</button>
+    </div>
+    
+    <div class="mock-grid" id="mockGrid"></div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================
+   SUPABASE INTEGRATION
+   ========================================= */
+const SUPABASE_URL = 'https://kqwllidmkcbcrwvktctv.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxd2xsaWRta2NiY3J3dmt0Y3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NDAzODksImV4cCI6MjA5NTAxNjM4OX0.7dwEkVYRGwfGd6twzaFqPiVJNY8FCn9uiX-HueYfiqs';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* =========================================
+   CORE STATE & INITIALIZATION
+   ========================================= */
+const DB_DAILY = 'pcm_daily_v7', DB_MOCK = 'pcm_mock_v7', DB_GOAL = 'pcm_goal_v7';
+
+// Load locally first to ensure instant visual boot
+let dailyData = JSON.parse(localStorage.getItem(DB_DAILY)) || [];
+let mockData = JSON.parse(localStorage.getItem(DB_MOCK)) || [];
+let goalData = JSON.parse(localStorage.getItem(DB_GOAL)) || null;
+
+let currentMockType = 'mains', calDate = new Date();
+
+document.getElementById('dDate').value = new Date().toISOString().split('T')[0];
+document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+
+/* =========================================
+   CLOUD SYNC LOGIC
+   ========================================= */
+async function loadFromCloud() {
+  try {
+    // 1. "Login" the exact same user on every device
+    const { data: { user }, error: authError } = await supabaseClient.auth.signInWithPassword({
+      email: 'gauravjee2026@gmail.com', // Use the email you just created
+      password: 'Gaurav@722#10' // Use the password you just created
+    });
+    
+    if (authError) throw authError;
+
+    // 2. Fetch the data from Supabase using that specific user's ID
+    const { data, error } = await supabaseClient.from('user_data').select('content').eq('id', user.id).single();
+    
+    if (data && data.content) {
+      dailyData = data.content.dailyData || [];
+      mockData = data.content.mockData || [];
+      goalData = data.content.goalData || null;
+      
+      // Update local storage to mirror the cloud
+      localStorage.setItem(DB_DAILY, JSON.stringify(dailyData));
+      localStorage.setItem(DB_MOCK, JSON.stringify(mockData));
+      localStorage.setItem(DB_GOAL, JSON.stringify(goalData));
+    }
+  } catch (err) {
+    console.error("Cloud sync error. Using local data.", err);
+  } finally {
+    // Refresh the UI with whatever data we ended up with
+    refreshUI();
+  }
+}
+
+async function saveDataToCloud() {
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
+    await supabaseClient.from('user_data').upsert({
+      id: user.id,
+      content: { dailyData, mockData, goalData }
+    });
+  } catch (err) {
+    console.error("Failed to push to cloud:", err);
+  }
+}
+
+async function saveData() {
+  // Update local storage instantly for snappy UX
+  localStorage.setItem(DB_DAILY, JSON.stringify(dailyData));
+  localStorage.setItem(DB_MOCK, JSON.stringify(mockData));
+  localStorage.setItem(DB_GOAL, JSON.stringify(goalData));
+  
+  // Push to cloud in the background
+  await saveDataToCloud();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function switchTab(tab) {
+  document.getElementById('dailySection').classList.toggle('hidden', tab !== 'daily');
+  document.getElementById('mockSection').classList.toggle('hidden', tab !== 'mocks');
+  document.querySelectorAll('.header .tab-btn').forEach((btn, i) => btn.classList.toggle('active', (tab === 'daily' && i===0) || (tab==='mocks' && i===1)));
+}
+
+function switchMockType(type) {
+  currentMockType = type;
+  document.getElementById('mainsInputs').classList.toggle('hidden', type !== 'mains');
+  document.getElementById('advInputs').classList.toggle('hidden', type !== 'advanced');
+  document.getElementById('btnMains').classList.toggle('active', type === 'mains');
+  document.getElementById('btnAdv').classList.toggle('active', type === 'advanced');
+  document.getElementById('mockFormTitle').innerText = type === 'mains' ? "Add JEE Mains Mock" : "Add JEE Advanced Mock";
+  renderMocks(); 
+}
+
+/* =========================================
+   WEEKLY GOAL LOGIC
+   ========================================= */
+function renderGoal() {
+  if (goalData && goalData.t > 0) {
+    document.getElementById('goalSetupDiv').classList.add('hidden');
+    document.getElementById('goalProgressDiv').classList.remove('hidden');
+    document.getElementById('displayGoalName').innerText = goalData.n;
+    document.getElementById('goalFill').style.width = Math.min((goalData.c / goalData.t) * 100, 100) + '%';
+    document.getElementById('goalTextCurrent').innerText = `${goalData.c} done (${Math.round((goalData.c/goalData.t)*100)}%)`;
+    document.getElementById('goalTextTarget').innerText = `Target: ${goalData.t}`;
+  } else {
+    document.getElementById('goalSetupDiv').classList.remove('hidden');
+    document.getElementById('goalProgressDiv').classList.add('hidden');
+  }
+}
+function setGoal() {
+  let n = document.getElementById('goalName').value, t = parseInt(document.getElementById('goalTarget').value)||0;
+  if(!n || t<=0) return alert("Valid Goal and Target required.");
+  goalData = { n, t, c: 0 }; saveData(); renderGoal(); showToast("Target Locked!");
+}
+function updateGoal() {
+  let add = parseInt(document.getElementById('goalAddVal').value)||0;
+  if(add > 0 && goalData) { goalData.c += add; document.getElementById('goalAddVal').value=''; saveData(); renderGoal(); showToast("Progress Added!");}
+}
+function clearGoal() { goalData = null; saveData(); renderGoal(); }
+
+/* =========================================
+   7-DAY ANALYSIS
+   ========================================= */
+function render7DayAnalysis() {
+  let pQ=0, pH=0, cQ=0, cH=0, mQ=0, mH=0;
+  
+  let today = new Date(); today.setHours(23,59,59,999);
+  let past7 = new Date(today); past7.setDate(today.getDate() - 7); past7.setHours(0,0,0,0);
+  
+  dailyData.forEach(d => {
+    let dDate = new Date(d.d);
+    if(dDate >= past7 && dDate <= today) {
+      pQ += d.pq; pH += d.ph;
+      cQ += d.cq; cH += d.ch;
+      mQ += d.mq; mH += d.mh;
+    }
+  });
+
+  document.getElementById('aPhyQ').innerText = `${pQ} Qs`; document.getElementById('aPhyH').innerText = `${pH.toFixed(1)} hrs`;
+  document.getElementById('aChemQ').innerText = `${cQ} Qs`; document.getElementById('aChemH').innerText = `${cH.toFixed(1)} hrs`;
+  document.getElementById('aMathQ').innerText = `${mQ} Qs`; document.getElementById('aMathH').innerText = `${mH.toFixed(1)} hrs`;
+  document.getElementById('aTotQ').innerText = `${pQ+cQ+mQ} Qs`; document.getElementById('aTotH').innerText = `${(pH+cH+mH).toFixed(1)} hrs`;
+}
+
+/* =========================================
+   DAILY ENTRY & LOST TIME AUDIT
+   ========================================= */
+const wInp = document.getElementById('dWake'), sInp = document.getElementById('dSleep');
+
+function calcLostTime() {
+  if (!wInp.value || !sInp.value) { document.getElementById('lostTimeAudit').classList.add('hidden'); return; }
+  
+  let w = new Date(`1970-01-01T${wInp.value}`), s = new Date(`1970-01-01T${sInp.value}`);
+  if (s < w) s.setDate(s.getDate() + 1); 
+  
+  let studyHrs = ['pH','cH','mH'].reduce((acc, id) => acc + (parseFloat(document.getElementById(id).value)||0), 0);
+  let awakeHrs = (s - w) / 3600000;
+  let lost = awakeHrs - studyHrs;
+  
+  const audit = document.getElementById('lostTimeAudit');
+  if (lost > 0 && studyHrs > 0) { 
+    audit.classList.remove('hidden'); 
+    document.getElementById('lostTimeText').innerText = `${lost.toFixed(1)} HOURS LOST`; 
+  } else {
+    audit.classList.add('hidden');
+  }
+}
+
+[wInp, sInp, document.getElementById('pH'), document.getElementById('cH'), document.getElementById('mH')].forEach(e => e.addEventListener('input', calcLostTime));
+
+function saveDaily() {
+  let date = document.getElementById('dDate').value; if (!date) return alert("Select Date");
+  let entry = {
+    d: date, rate: parseInt(document.getElementById('dRate').value)||3,
+    w: wInp.value, s: sInp.value,
+    pq: parseInt(document.getElementById('pQ').value)||0, ph: parseFloat(document.getElementById('pH').value)||0,
+    cq: parseInt(document.getElementById('cQ').value)||0, ch: parseFloat(document.getElementById('cH').value)||0,
+    mq: parseInt(document.getElementById('mQ').value)||0, mh: parseFloat(document.getElementById('mH').value)||0
+  };
+  dailyData = dailyData.filter(d => d.d !== date); dailyData.push(entry);
+  dailyData.sort((a,b) => new Date(b.d) - new Date(a.d));
+  saveData(); refreshUI(); showToast("Daily Log Saved!");
+  
+  ['pQ','pH','cQ','cH','mQ','mH','dRate','dWake','dSleep'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('lostTimeAudit').classList.add('hidden');
+}
+
+/* =========================================
+   STREAK TRACKER
+   ========================================= */
+function calcStreak() {
+  let strk = 0, curr = new Date();
+  while(true) {
+    let ds = curr.toISOString().split('T')[0], ent = dailyData.find(x => x.d === ds);
+    if(ent && (ent.ph+ent.ch+ent.mh)>0) strk++;
+    else if (ds === new Date().toISOString().split('T')[0]) { curr.setDate(curr.getDate()-1); continue; }
+    else break;
+    curr.setDate(curr.getDate()-1);
+  }
+  document.getElementById('streakBadge').innerText = `🔥 ${strk} Days`;
+}
+
+/* =========================================
+   CALENDAR RENDER (Grid + Hover Tooltip)
+   ========================================= */
+function changeMonth(dir) { calDate.setMonth(calDate.getMonth() + dir); renderCalendar(); document.getElementById('dayDetailsPanel').classList.remove('show'); }
+
+function renderCalendar() {
+  let y = calDate.getFullYear(), m = calDate.getMonth();
+  document.getElementById('calMonthDisplay').innerText = new Intl.DateTimeFormat('en-US', {month:'short', year:'numeric'}).format(calDate);
+  
+  let html = '', fDay = new Date(y, m, 1).getDay(), dInM = new Date(y, m+1, 0).getDate();
+  for(let i=0; i<fDay; i++) html += '<div class="cal-day empty"></div>';
+  
+  for(let i=1; i<=dInM; i++) {
+    let ds = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    let ent = dailyData.find(x => x.d === ds);
+    
+    if(ent) {
+      let rClass = `rate-${ent.rate || 3}`;
+      let tH = ent.ph + ent.ch + ent.mh;
+      let safeJson = JSON.stringify(ent).replace(/'/g, "&#39;");
+      
+      let tipHtml = `
+        <div class="tooltip">
+          <b style="color:var(--accent-blue)">${ds}</b><br>
+          <span style="color:var(--phy-color)">Phy:</span> ${ent.pq}Q / ${ent.ph}h<br>
+          <span style="color:var(--chem-color)">Chem:</span> ${ent.cq}Q / ${ent.ch}h<br>
+          <span style="color:var(--math-color)">Math:</span> ${ent.mq}Q / ${ent.mh}h
+        </div>
+      `;
+      
+      html += `<div class="cal-day ${rClass}" onclick='showDayDetails(${safeJson}, this)'>
+                 <span style="font-weight:700">${i}</span>
+                 <span style="font-size:11px;">${tH}h</span>
+                 ${tipHtml}
+               </div>`;
+    } else {
+      html += `<div class="cal-day" onclick="showEmptyDay('${ds}', this)"><span>${i}</span></div>`;
+    }
+  }
+  document.getElementById('calendarGrid').innerHTML = html;
+}
+
+function clearCalSelection() { document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('active-sel')); }
+
+function showDayDetails(ent, element) {
+  clearCalSelection(); element.classList.add('active-sel');
+  const p = document.getElementById('dayDetailsPanel');
+  document.getElementById('ddDate').innerText = ent.d;
+  document.getElementById('ddPhy').innerText = `${ent.pq}Q / ${ent.ph}h`;
+  document.getElementById('ddChem').innerText = `${ent.cq}Q / ${ent.ch}h`;
+  document.getElementById('ddMath').innerText = `${ent.mq}Q / ${ent.mh}h`;
+  p.classList.add('show');
+}
+
+function showEmptyDay(ds, element) {
+  clearCalSelection(); element.classList.add('active-sel');
+  const p = document.getElementById('dayDetailsPanel');
+  document.getElementById('ddDate').innerText = ds;
+  document.getElementById('ddPhy').innerText = `-`;
+  document.getElementById('ddChem').innerText = `-`;
+  document.getElementById('ddMath').innerText = `-`;
+  p.classList.add('show');
+}
+
+/* =========================================
+   MOCK TESTS & WHAT-IF CALCULATION
+   ========================================= */
+function saveMock() {
+  let d = document.getElementById('mDate').value; if(!d) return alert("Date required.");
+  let mck = { id:Date.now(), t:currentMockType, d, n:document.getElementById('mName').value||"Untitled", s:document.getElementById('mSyllabus').value||"Full" };
+  const v = id => parseFloat(document.getElementById(id).value)||0;
+  
+  if(currentMockType === 'mains') {
+    mck.p = {c: v('mpC'), w: v('mpW')};
+    mck.c = {c: v('mcC'), w: v('mcW')};
+    mck.m = {c: v('mmC'), w: v('mmW')};
+    
+    // +4 for Correct, -1 for Wrong
+    mck.pn = (mck.p.c * 4) - mck.p.w;
+    mck.cn = (mck.c.c * 4) - mck.c.w;
+    mck.mn = (mck.m.c * 4) - mck.m.w;
+    
+    mck.nt = mck.pn + mck.cn + mck.mn; 
+    mck.wi = (mck.p.c + mck.c.c + mck.m.c) * 4; // Score if 0 wrong
+  } else {
+    mck.p1 = {
+      p: {a: v('a1pA'), m: v('a1pM'), w: v('a1pW')},
+      c: {a: v('a1cA'), m: v('a1cM'), w: v('a1cW')},
+      m: {a: v('a1mA'), m: v('a1mM'), w: v('a1mW')}
+    };
+    mck.p1.nt = mck.p1.p.m + mck.p1.c.m + mck.p1.m.m;
+    
+    mck.p2 = {
+      p: {a: v('a2pA'), m: v('a2pM'), w: v('a2pW')},
+      c: {a: v('a2cA'), m: v('a2cM'), w: v('a2cW')},
+      m: {a: v('a2mA'), m: v('a2mM'), w: v('a2mW')}
+    };
+    mck.p2.nt = mck.p2.p.m + mck.p2.c.m + mck.p2.m.m;
+
+    mck.nt = mck.p1.nt + mck.p2.nt;
+    mck.ta = mck.p1.p.a + mck.p1.c.a + mck.p1.m.a + mck.p2.p.a + mck.p2.c.a + mck.p2.m.a;
+    mck.tw = mck.p1.p.w + mck.p1.c.w + mck.p1.m.w + mck.p2.p.w + mck.p2.c.w + mck.p2.m.w;
+  }
+  
+  mockData.unshift(mck); saveData(); refreshUI(); showToast("Mock Saved!");
+  document.querySelectorAll('#mainsInputs input, #advInputs input, #mSyllabus').forEach(i=>i.value='');
+}
+
+function renderMocks() {
+  let html = '';
+  let filteredMocks = mockData.filter(m => m.t === currentMockType);
+
+  if (!filteredMocks.length) {
+    document.getElementById('mockGrid').innerHTML = '<div style="color:var(--text-muted); grid-column:1/-1; text-align:center; padding: 40px; background: #000; border-radius: 16px; border: 1px solid var(--border-color);">No mocks logged for this category.</div>';
+    return;
+  }
+
+  filteredMocks.forEach((m) => {
+    let originalIndex = mockData.indexOf(m);
+    
+    if (m.t === 'mains') {
+      let tC = (m.p?.c||0) + (m.c?.c||0) + (m.m?.c||0);
+      let tW = (m.p?.w||0) + (m.c?.w||0) + (m.m?.w||0);
+      let totalAtt = tC + tW;
+      let acc = totalAtt > 0 ? Math.round((tC / totalAtt) * 100) : 0;
+
+      html += `
+        <div class="card mock-card" style="padding:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
+            <div><div style="font-size:18px; font-weight:700; color:white;">${m.n}</div><div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${m.d}</div></div>
+            <button style="color:var(--red); font-size:18px; font-weight:900;" onclick="deleteMock(${originalIndex})">✕</button>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:16px; line-height:1.5;"><b>Syllabus:</b> ${m.s}</div>
+          
+          <div class="subject-row"><span>Physics <span style="font-size:11px;color:var(--text-muted);">(${m.p?.c||0}C, ${m.p?.w||0}W)</span></span><b><span style="color:var(--green)">${m.pn}</span></b></div>
+          <div class="subject-row"><span>Chemistry <span style="font-size:11px;color:var(--text-muted);">(${m.c?.c||0}C, ${m.c?.w||0}W)</span></span><b><span style="color:var(--green)">${m.cn}</span></b></div>
+          <div class="subject-row"><span>Math <span style="font-size:11px;color:var(--text-muted);">(${m.m?.c||0}C, ${m.m?.w||0}W)</span></span><b><span style="color:var(--green)">${m.mn}</span></b></div>
+          <div class="subject-row"><span>Accuracy</span><b><span style="color:var(--accent-blue)">${acc}%</span></b></div>
+          
+          <div class="total-row" id="tRow_${originalIndex}"><span>Net Score</span><span style="color:var(--accent-blue); font-size:22px;">${m.nt}</span></div>
+          <button class="what-if-btn" id="wi_${originalIndex}" onclick="tglWI(${originalIndex}, ${m.nt}, ${m.wi||m.nt})">🔍 Toggle "What-If" Blank Negatives</button>
+        </div>
+      `;
+    } else {
+      // ADVANCED
+      html += `
+        <div class="card mock-card" style="padding:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+            <div><div style="font-size:18px; font-weight:700; color:white;">${m.n}</div><div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${m.d}</div></div>
+            <button style="color:var(--red); font-size:18px; font-weight:900;" onclick="deleteMock(${originalIndex})">✕</button>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:16px; line-height:1.5;"><b>Syllabus:</b> ${m.s}</div>
+          
+          <div style="background:#111; padding:12px; border-radius:10px; margin-bottom:12px; border:1px solid var(--border-color);">
+            <div style="font-size:12px; font-weight:800; color:white; margin-bottom:8px;">PAPER 1</div>
+            <div class="adv-table" style="color:var(--text-muted); font-size:11px; text-transform:uppercase;"><span></span><span>Att</span><span>Mark</span><span>Wrng</span></div>
+            <div class="adv-table" style="color:var(--phy-color);"><span>Phy</span><span>${m.p1?.p.a||0}</span><b style="color:white;">${m.p1?.p.m||0}</b><span>${m.p1?.p.w||0}</span></div>
+            <div class="adv-table" style="color:var(--chem-color);"><span>Chem</span><span>${m.p1?.c.a||0}</span><b style="color:white;">${m.p1?.c.m||0}</b><span>${m.p1?.c.w||0}</span></div>
+            <div class="adv-table" style="color:var(--math-color); margin-bottom:10px;"><span>Math</span><span>${m.p1?.m.a||0}</span><b style="color:white;">${m.p1?.m.m||0}</b><span>${m.p1?.m.w||0}</span></div>
+            <div style="text-align:right; font-size:14px; font-weight:700; color:white; border-top:1px dashed #333; padding-top:8px;">P1 Total: <span style="color:var(--accent-blue)">${m.p1?.nt||0}</span></div>
+          </div>
+
+          <div style="background:#111; padding:12px; border-radius:10px; margin-bottom:16px; border:1px solid var(--border-color);">
+            <div style="font-size:12px; font-weight:800; color:white; margin-bottom:8px;">PAPER 2</div>
+            <div class="adv-table" style="color:var(--text-muted); font-size:11px; text-transform:uppercase;"><span></span><span>Att</span><span>Mark</span><span>Wrng</span></div>
+            <div class="adv-table" style="color:var(--phy-color);"><span>Phy</span><span>${m.p2?.p.a||0}</span><b style="color:white;">${m.p2?.p.m||0}</b><span>${m.p2?.p.w||0}</span></div>
+            <div class="adv-table" style="color:var(--chem-color);"><span>Chem</span><span>${m.p2?.c.a||0}</span><b style="color:white;">${m.p2?.c.m||0}</b><span>${m.p2?.c.w||0}</span></div>
+            <div class="adv-table" style="color:var(--math-color); margin-bottom:10px;"><span>Math</span><span>${m.p2?.m.a||0}</span><b style="color:white;">${m.p2?.m.m||0}</b><span>${m.p2?.m.w||0}</span></div>
+            <div style="text-align:right; font-size:14px; font-weight:700; color:white; border-top:1px dashed #333; padding-top:8px;">P2 Total: <span style="color:var(--accent-blue)">${m.p2?.nt||0}</span></div>
+          </div>
+          
+          <div style="display:flex; justify-content:space-between; font-size:13px; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; margin-bottom:12px;">
+            <span>Total Att: <b>${m.ta||0}</b></span>
+            <span>Total Wrng: <b style="color:var(--red)">${m.tw||0}</b></span>
+          </div>
+          <div class="total-row"><span>Combined Score</span><span style="color:var(--accent-blue); font-size:22px;">${m.nt}</span></div>
+        </div>
+      `;
+    }
+  });
+  document.getElementById('mockGrid').innerHTML = html;
+}
+
+function tglWI(i, nt, wi) {
+  let b = document.getElementById(`wi_${i}`), r = document.getElementById(`tRow_${i}`);
+  if(b.classList.contains('active')) { 
+    b.classList.remove('active'); b.innerText = '🔍 Toggle "What-If" Blank Negatives'; 
+    r.innerHTML = `<span>Net Score</span><span style="color:var(--accent-blue); font-size:22px;">${nt}</span>`; 
+  } else { 
+    b.classList.add('active'); b.innerText = `You lost ${wi-nt} marks to negatives!`; 
+    r.innerHTML = `<span style="color:var(--yellow)">What-If Score</span><span style="color:var(--yellow); font-size:22px;">${wi}</span>`; 
+  }
+}
+
+function deleteMock(i) { mockData.splice(i,1); saveData(); refreshUI(); }
+
+/* =========================================
+   GLOBAL LIFECYCLE
+   ========================================= */
+function refreshUI() { renderGoal(); render7DayAnalysis(); renderCalendar(); calcStreak(); renderMocks(); }
+
+function exportData() {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ dailyData, mockData, goalData })], {type: "application/json"}));
+  a.download = 'pcm-pro-backup.json'; a.click(); showToast("Data Exported!");
+}
+
+function importData(e) {
+  let f = e.target.files[0]; if(!f) return; let r = new FileReader();
+  r.onload = ev => { 
+    try { 
+      let p = JSON.parse(ev.target.result); 
+      dailyData = p.dailyData||[]; mockData = p.mockData||[]; goalData = p.goalData||null; 
+      saveData(); refreshUI(); showToast("Data Imported!"); 
+    } catch(err) { alert("Invalid File"); } 
+  };
+  r.readAsText(f);
+}
+
+// Initial Boot (Load from cloud instead of local cache only)
+refreshUI(); // Draw UI instantly using local cache
+loadFromCloud(); // Then fetch fresh cloud data in the background
+</script>
+</body>
+</html>
