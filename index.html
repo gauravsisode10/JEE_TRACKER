@@ -317,6 +317,27 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webk
 
   </div> </div> 
 <script>
+
+// Add this anywhere in your script to prevent the Data Eraser bug!
+document.getElementById('dDate').addEventListener('change', function(e) {
+  let existingEntry = dailyData.find(d => d.d === e.target.value);
+  if (existingEntry) {
+    document.getElementById('dWake').value = existingEntry.w || '';
+    document.getElementById('dSleep').value = existingEntry.s || '';
+    document.getElementById('dRate').value = existingEntry.rate || '';
+    document.getElementById('pQ').value = existingEntry.pq || '';
+    document.getElementById('pH').value = existingEntry.ph || '';
+    document.getElementById('cQ').value = existingEntry.cq || '';
+    document.getElementById('cH').value = existingEntry.ch || '';
+    document.getElementById('mQ').value = existingEntry.mq || '';
+    document.getElementById('mH').value = existingEntry.mh || '';
+    showToast("Loaded existing data for this date!");
+  } else {
+    // If no data for this date, clear the boxes
+    ['pQ','pH','cQ','cH','mQ','mH','dRate','dWake','dSleep'].forEach(id => document.getElementById(id).value = '');
+  }
+});
+   
 /* =========================================
    1. SECURE CONFIGURATION & STATE
    ========================================= */
