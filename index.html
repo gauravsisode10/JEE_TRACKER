@@ -393,7 +393,7 @@ async function loadFromCloud() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
   
-  const { data, error } = await supabaseClient.from('user_data').select('content').eq('id', user.id).single();
+  const { data, error } = await supabaseClient.from('user_data').select('content').eq('id', user.id).maysingle();
   
   if (data && data.content) {
     dailyData = data.content.dailyData || [];
