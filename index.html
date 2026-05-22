@@ -371,7 +371,7 @@ async function signUp() {
   const pass = document.getElementById('userPass').value;
   const { error } = await supabaseClient.auth.signUp({ email, password: pass });
   if (error) alert(error.message);
-  else alert("Check your email to confirm your account!");
+  else alert("ACCOUNT CREATED");
 }
 
 async function logOut() {
